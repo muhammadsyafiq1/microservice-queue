@@ -29,7 +29,7 @@ export class UserController {
       const { name, email, phone } = req.body;
 
       if (!name || !email) {
-        res.status(422).json({ success: false, message: "name and email are required" });
+        res.status(422).json({ success: false, message: "email and name are required" });
         return;
       }
 

@@ -2,9 +2,6 @@ import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import redis from "../config/redis";
 
-// Di API Gateway, rate limit dipasang di SATU TEMPAT untuk SEMUA service.
-// Ini keuntungan microservice dengan gateway — service di belakang
-// tidak perlu masing-masing pasang rate limiter sendiri.
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100000, // total limit untuk semua endpoint di belakang gateway

@@ -117,7 +117,7 @@ export class NotepadController {
     try {
       const ok = await notepadModel.delete(Number(req.params.id));
       if (!ok) {
-        res.status(404).json({ success: false, message: "Notepad not found" });
+        res.status(404).json({ success: false, message: "Notepad tidak ditemukan" });
         return;
       }
       res.json({ success: true, message: "Notepad deleted" });

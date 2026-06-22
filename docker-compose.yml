@@ -1,0 +1,119 @@
+version: "3.8"
+
+services:
+  # ─── Infrastructure ─────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    # healthcheck:
+    #   test: ["CMD", "rabbitmqctl", "status"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: user_service_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d  # script SQL otomatis jalan saat container pertama kali dibuat
+
+  # ─── User Service ───────────────────────────────────────────────
+  user-service:
+    restart: on-failure
+    build: ./user-service
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=
+      - DB_NAME=user_service_db
+    depends_on:
+      - mysql
+
+  # ─── Notepad Service — HTTP Server ──────────────────────────────
+  notepad-service:
+    restart: on-failure
+    build: ./notepad-service
+    ports:
+      - "4002:4002"
+    environment:
+      - PORT=4002
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=
+      - DB_NAME=notepad_service_db
+      - USER_SERVICE_URL=http://user-service:4001
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - NOTEPAD_CREATE_QUEUE=notepad_create_queue
+      - NOTEPAD_CREATED_QUEUE=notepad_created_queue
+    depends_on:
+      - mysql
+      - rabbitmq
+      - user-service
+
+  # ─── Notepad Service — WORKER (image sama, command beda) ───────
+  notepad-worker:
+    restart: on-failure
+    build: ./notepad-service
+    command: pnpm start:worker
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=
+      - DB_NAME=notepad_service_db
+      - USER_SERVICE_URL=http://user-service:4001
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - NOTEPAD_CREATE_QUEUE=notepad_create_queue
+      - NOTEPAD_CREATED_QUEUE=notepad_created_queue
+    depends_on:
+      - mysql
+      - rabbitmq
+      - user-service
+
+  # ─── Notification Service ───────────────────────────────────────
+  notification-service:
+    restart: on-failure
+    build: ./notification-service
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - NOTEPAD_QUEUE=notepad_created_queue
+    depends_on:
+      - rabbitmq
+
+  # ─── API Gateway ─────────────────────────────────────────────────
+  api-gateway:
+    restart: on-failure
+    build: ./api-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - USER_SERVICE_URL=http://user-service:4001
+      - NOTEPAD_SERVICE_URL=http://notepad-service:4002
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+      - user-service
+      - notepad-service
+
+volumes:
+  mysql_data:

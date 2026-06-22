@@ -1,0 +1,24 @@
+#jalankan docker beserta workernya
+docker compose up --build --scale notepad-worker=5 -d
+
+#memaatikan layanan docker
+docker compose down
+
+# Atau melihat log khusus untuk service tertentu saja (misal: user-service)
+docker compose logs user-service
+
+#Dockerfile (Resep/Blueprint): File berisi instruksi langkah-demi-langkah cara membungkus source code aplikasi (misal Node.js/TypeScript) menjadi sebuah Docker Image (cetak biru siap pakai).
+
+#Docker Container (Wujud Nyata): Hasil instansiasi/menyalanya si Docker Image. Ini adalah aplikasi yang sudah hidup dan berjalan terisolasi di dalam "kotak besi".
+
+#docker-compose.yml (Surat Komando): File konfigurasi untuk mengatur dan menjalankan banyak kontainer sekaligus secara terpusat. Dia yang mengatur port, database, antrean RabbitMQ, jumlah scaling worker, dan restart policy agar semua service bisa saling mengobrol dalam satu sistem utuh.
+
+User Klik Submit: Data mentah dikirim via HTTP ke API Gateway/Controller.
+
+NotepadController: Langsung melempar data mentah ke antrean notepad_create_queue dan langsung memberi respons cepat ke user (Respons 202). User tidak perlu menunggu proses DB selesai.
+
+Worker Notepad-Service: Mengambil data dari notepad_create_queue, mengecek validitas user ke user-service, lalu menyimpannya ke database MySQL (Status: completed).
+
+Estafet ke Antrean Kedua: Begitu sukses masuk DB, Worker Notepad-Service membungkus data baru (termasuk email user) lalu melemparnya ke antrean notepad_created_queue.
+
+Worker Notification-Service: Mengambil data dari notepad_created_queue (lewat variabel NOTEPAD_QUEUE Anda) lalu mengeksekusi tugas akhir: mengirim notifikasi/email ke ujung jari user.

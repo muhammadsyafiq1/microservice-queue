@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import router from "./routes";
 import { globalLimiter } from "./middlewares/rateLimiter";
+import { metricsMiddleware } from "./middlewares/metricsMiddleware";
+import { register } from "./metrics";
 
 dotenv.config();
 
@@ -10,11 +12,15 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
+app.use(metricsMiddleware);   
 app.use(globalLimiter);
 
-// PENTING: jangan pasang express.json() SEBELUM proxy middleware.
-// Kalau body sudah di-parse duluan oleh express.json(), proxy tidak bisa
-// meneruskan body asli ke service tujuan dengan benar.
+// Endpoint khusus untuk Prometheus "menanyakan" metrics dari API Gateway. Endpoint ini tidak dilindungi rate limiter
+app.get("/metrics", async (_req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
+});
+
 app.use("/", router);
 
 app.get("/health", (_req, res) => {

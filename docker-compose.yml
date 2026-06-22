@@ -7,11 +7,12 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-    # healthcheck:
-    #   test: ["CMD", "rabbitmqctl", "status"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
+      - "15692:15692"   #port metrics Prometheus
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:alpine
@@ -114,6 +115,27 @@ services:
       - redis
       - user-service
       - notepad-service
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - rabbitmq
+      - api-gateway
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
 
 volumes:
   mysql_data:
+  grafana_data:

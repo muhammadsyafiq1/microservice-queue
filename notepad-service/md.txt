@@ -1,5 +1,6 @@
 #jalankan docker beserta workernya
 docker compose up --build --scale notepad-worker=5 -d
+docker compose up --scale notepad-worker=5 --scale notification-service=5 -d (kalau mau notif cepat juga)
 
 #memaatikan layanan docker
 docker compose down

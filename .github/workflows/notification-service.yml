@@ -48,5 +48,5 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker tag microservice-queue-user-service:${{ github.sha }} ${{ secrets.DOCKERHUB_USERNAME }}/microservice-queue-user-service:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/microservice-queue-user-service:latest
+          docker tag microservice-queue-notification-service:${{ github.sha }} ${{ secrets.DOCKERHUB_USERNAME }}/microservice-queue-notification-service:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/microservice-queue-notification-service:latest

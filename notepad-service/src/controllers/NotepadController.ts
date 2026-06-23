@@ -54,7 +54,7 @@ export class NotepadController {
       const requestId = randomUUID();
 
       // publish data mentahnya saja ke queue. Validasi user dan
-      // insert ke database sepenuhnya jadi tanggung jawab worker.
+      // insert ke database akan dilakukan worker.
       await publishToQueue(process.env.NOTEPAD_CREATE_QUEUE!, {
         request_id: requestId,
         user_id,

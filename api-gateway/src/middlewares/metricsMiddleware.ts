@@ -4,7 +4,7 @@ import { httpRequestsTotal, httpRequestDuration } from "../metrics";
 export function metricsMiddleware(req: Request, res: Response, next: NextFunction): void {
   const start = Date.now();
 
-  // Setelah response selesai dikirim, catat metricnya
+  // Setelah response selesai dikirim, catat metricnya apa saja
   res.on("finish", () => {
     const duration = (Date.now() - start) / 1000; // convert ke detik
     const route = req.path.split("/")[1] || "unknown"; // ambil "users" dari "/users/123"
